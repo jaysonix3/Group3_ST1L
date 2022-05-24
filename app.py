@@ -196,12 +196,12 @@ class AllCategoriesPage(Frame):
         listbox_category.pack(side=LEFT)
 
         # scrollbar for tasks list 
-        scrollbar_tasks = Scrollbar(frame)
-        scrollbar_tasks.pack(side=RIGHT, fill=Y)
+        scrollbar_category = Scrollbar(frame)
+        scrollbar_category.pack(side=RIGHT, fill=Y)
 
         # vertical scrollbar properties
-        listbox_category.config(yscrollcommand=scrollbar_tasks.set)
-        scrollbar_tasks.config(command=listbox_category.yview)
+        listbox_category.config(yscrollcommand=scrollbar_category.set)
+        scrollbar_category.config(command=listbox_category.yview)
 
         # button to customize view of tasks by category
         viewTasksByBtn = Button(self, text="View tasks by category", width=48)
