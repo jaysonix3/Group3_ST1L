@@ -33,7 +33,8 @@ class SampleApp(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
 
-        self.title_font = tkfont.Font(family="Arial", size=18, weight="bold")   # formatting purposes (set font properties)
+        # formatting purposes (set font properties)
+        self.title_font = tkfont.Font(family="Arial", size=18, weight="bold")   
         self.subtitle_font = tkfont.Font(family = "Arial", size = 12, weight = "bold")
 
         # pages / frames are in a stack (frames that need to be visible will be raised above other frames)
@@ -111,6 +112,7 @@ class TasksMainPage(Frame):
 
         frame = Frame(self, parent)
 
+        # label for category and task listbox
         label = Label(self, text="All categories \t\t All Tasks", font=controller.subtitle_font)
         label.pack(side="top", fill= 'none', pady=10, anchor = NW)
 
