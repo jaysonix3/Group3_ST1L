@@ -34,6 +34,7 @@ class SampleApp(Tk):
         Tk.__init__(self, *args, **kwargs)
 
         self.title_font = tkfont.Font(family="Arial", size=18, weight="bold")   # formatting purposes (set font properties)
+        self.subtitle_font = tkfont.Font(family = "Arial", size = 12, weight = "bold")
 
         # pages / frames are in a stack (frames that need to be visible will be raised above other frames)
         container = Frame(self)
@@ -83,14 +84,23 @@ class LandingPage(Frame):
         button2.pack(side = "top", fill = "x", pady = 20)
         button3.pack(side = "top", fill = "x", pady = 20)
 
-# loadTasks - function to load tasks from database 
-def loadTasks(listbox_tasks): 
+# loadData - function to load tasks from database 
+def loadData(listbox_category, listbox_tasks): 
+    # select all tasks
     dbCursor.execute("SELECT CONCAT(CAST(`duedate` AS CHAR), ': ', tasktitle, ' - ', description) FROM task")
     listbox_tasks.delete(0, END)
     i = 0
     for task in dbCursor: 
         for j in range(len(task)):
             listbox_tasks.insert(END, task[j])
+
+    # select all categories
+    dbCursor.execute("SELECT categoryname FROM category")
+    listbox_category.delete(0, END)
+    i = 0
+    for task in dbCursor: 
+        for j in range(len(task)):
+            listbox_category.insert(END, task[j])
 
 # TasksMainPage - 'tasks' page
 class TasksMainPage(Frame): 
@@ -100,6 +110,13 @@ class TasksMainPage(Frame):
         self.controller = controller
 
         frame = Frame(self, parent)
+
+        label = Label(self, text="All categories \t\t All Tasks", font=controller.subtitle_font)
+        label.pack(side="top", fill= 'none', pady=10, anchor = NW)
+
+        # box to list all categories
+        listbox_category = Listbox(frame, height=15, width=20)
+        listbox_category.pack(side=LEFT)
 
         # box to list all tasks
         listbox_tasks = Listbox(frame, height=15, width=50)
@@ -114,8 +131,8 @@ class TasksMainPage(Frame):
         scrollbar_tasks.config(command=listbox_tasks.yview)
 
         # load tasks from database 
-        loadTasksBtn = Button(self, text="Load tasks", width=48, command = loadTasks(listbox_tasks))
-        loadTasksBtn.pack(side = 'bottom')
+        loadDataBtn = Button(self, text="Load data", width=48, command = loadData(listbox_category, listbox_tasks))
+        loadDataBtn.pack(side = 'bottom')
 
         # button to add a task
         addTaskBtn = Button(self, text="Add task", width=48)
