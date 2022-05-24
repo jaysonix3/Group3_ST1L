@@ -15,8 +15,7 @@
 ## User in MariadDB:
 	username: test
 	password: cmsc127
-
-	- Note: if using root, update app.py
+- Note: if using root, update app.py
 
 ## Creation of user in MariaDB: 
 	- login as root user
