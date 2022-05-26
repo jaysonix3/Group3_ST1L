@@ -151,25 +151,22 @@ class AllTasksPage(Frame):
         viewTasksByBtn = Button(self, text="Sort by month", width=48)
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
-        #button to add a task to a category
-        addTaskCategoryBtn = Button(self, text = "Add a task to a category", width=48, )
-        addTaskCategoryBtn.pack(side = 'bottom', fill = 'x')
+        # button to delete a task 
+        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn.pack(side = 'bottom', fill = 'x')
 
-        #button to search for a task
-        searchTaskBtn = Button(self, text = "Search for a task", width=48)
-        searchTaskBtn.pack(side = 'bottom', fill = 'x')
+        # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
+        # #button to search for a task
+        # searchTaskBtn = Button(self, text = "Search for a task", width=48)
+        # searchTaskBtn.pack(side = 'bottom', fill = 'x')
 
         #button to mark a task as done 
-        markDoneBtn = Button(self, text = "Mark as done", width=48)
+        markDoneBtn = Button(self, text = "Mark task as done", width=48)
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
         editTaskBtn = Button(self, text = "Edit a task", width=48)
         editTaskBtn.pack(side = 'bottom', fill = 'x')
-
-        # button to delete a task 
-        deleteTaskBtn = Button(self, text="Delete task", width=48)
-        deleteTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # button to add a task
         addTaskBtn = Button(self, text="Add task", width=48)
@@ -212,25 +209,30 @@ class AllCategoriesPage(Frame):
         self.listbox_category.config(yscrollcommand=scrollbar_category.set)
         scrollbar_category.config(command=self.listbox_category.yview)
 
-        #button to search for a category
-        searchCategoryBtn = Button(self, text = "Search for a category", width=48)
-        searchCategoryBtn.pack(side = 'bottom', fill = 'x')
+        # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
+        # #button to search for a category
+        # searchCategoryBtn = Button(self, text = "Search for a category", width=48)
+        # searchCategoryBtn.pack(side = 'bottom', fill = 'x')
 
         # button to delete a category 
-        deleteCategoryBtn = Button(self, text="Delete category", width=48)
+        deleteCategoryBtn = Button(self, text="Delete a category", width=48)
         deleteCategoryBtn.pack(side = 'bottom', fill = 'x')
+
+        #button to add a task to a category
+        addTaskCategoryBtn = Button(self, text = "Add a task to a category", width=48, )
+        addTaskCategoryBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a category
         editCategoryBtn = Button(self, text = "Edit a category", width=48)
         editCategoryBtn.pack(side = 'bottom', fill = 'x')
 
+        # button to customize view of tasks by category
+        viewTasksByBtn = Button(self, text="View a category", width=48)
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')  
+
         # button to add a category
         addCategoryBtn = Button(self, text="Add a category", width=48, command=lambda: controller.show_frame("AddCategoryPage"))
-        addCategoryBtn.pack(side = 'bottom', fill = 'x' ) 
-
-        # button to customize view of tasks by category
-        viewTasksByBtn = Button(self, text="View tasks by category", width=48)
-        viewTasksByBtn.pack(side = 'bottom', fill = 'x')    
+        addCategoryBtn.pack(side = 'bottom', fill = 'x' )   
 
         # button to go to the prev page
         menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
