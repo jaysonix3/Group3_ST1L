@@ -24,4 +24,5 @@ CREATE TABLE `task` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 INSERT INTO `task` (`taskid`, `tasktitle`, `status`, `duedate`, `description`, `categoryid`) VALUES
-    (1, 'Project Milestone 03', 'N', '2022-05-11', 'SQL Queries', 0);
+    (1, 'Project Milestone 03', 'N', '2022-05-11', 'SQL Queries', 1);
+
