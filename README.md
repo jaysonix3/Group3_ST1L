@@ -22,9 +22,9 @@
 	- run the following commands: 
 		- CREATE USER 'test'@localhost IDENTIFIED BY 'cmsc127';
 		- GRANT ALL PRIVILEGES ON cmsc127project.* TO 'test'@'localhost';
-
-## Notes:
-	- use 'source 127projectdump.sql;'
+	- login as test
+	- run the command: 
+		- source 127projectdump.sql;
 
 ## Running the program: 
 	- python app.py
