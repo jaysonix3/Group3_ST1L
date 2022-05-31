@@ -4,6 +4,7 @@
 from tkinter import *       
 from functools import partial
 from tkinter import font as tkfont      # formatting purposes
+import datetime                         # for sorting by month
 
 #reference for mysql connector: https://www.youtube.com/watch?v=oDR7k66x-AU&t=427s&ab_channel=DiscoverPython
 
@@ -44,7 +45,7 @@ class SampleApp(Tk):
 
         self.frames = {}
         # NOTE: always add newly created pages in the parameters
-        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AllCategoriesPage, AddCategoryPage):
+        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AllCategoriesPage, AddCategoryPage, ViewCategoryPage, SortByDatePage, SortByMonthPage, EditCategoryPage):
             page_name = F.__name__                              # get page name
             frame = F(parent=container, controller=self)        # frame
             self.frames[page_name] = frame
@@ -72,6 +73,32 @@ class SampleApp(Tk):
         
         print("Added", name, "successfully!")
 
+    def editCategory(self, oldName, newName, dbCursor):
+
+
+        # early return if either input is empty
+        if len(oldName) == 0 or len(newName) == 0:
+            print("Please input a valid category.")
+            return
+
+        # retrieves category id to be used for updating category name
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (oldName,))
+        catId = dbCursor.fetchone()
+
+        # early return if category does not exist
+        if catId == None:
+            print("Category does not exist.")
+            return
+        
+        # updates category name and commits changes
+        updateCat = "UPDATE category SET categoryname = (%s) WHERE categoryid = (%s);" 
+        args = newName, catId[0]
+        dbCursor.execute(updateCat, args)
+        dbConnect.commit()                      
+        
+        print("Successfully edited category: " + newName)
+    
 # LandingPage - landing page for the application (first window)
 class LandingPage(Frame): 
 
@@ -144,11 +171,11 @@ class AllTasksPage(Frame):
         scrollbar_tasks.config(command=self.listbox_tasks.yview)
 
         # button to customize view of tasks by day
-        viewTasksByBtn = Button(self, text="Sort by day", width=48)
+        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to customize view of tasks by month
-        viewTasksByBtn = Button(self, text="Sort by month", width=48)
+        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to delete a task 
@@ -165,7 +192,7 @@ class AllTasksPage(Frame):
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
-        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn = Button(self, text = "Edit a task", width=48, command=lambda: controller.show_frame("EditCategoryPage"))
         editTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # button to add a task
@@ -223,11 +250,11 @@ class AllCategoriesPage(Frame):
         addTaskCategoryBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a category
-        editCategoryBtn = Button(self, text = "Edit a category", width=48)
+        editCategoryBtn = Button(self, text = "Edit a category", width=48, command=lambda: controller.show_frame("EditCategoryPage"))
         editCategoryBtn.pack(side = 'bottom', fill = 'x')
 
         # button to customize view of tasks by category
-        viewTasksByBtn = Button(self, text="View a category", width=48)
+        viewTasksByBtn = Button(self, text="View a category", width=48, command=lambda: controller.show_frame("ViewCategoryPage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')  
 
         # button to add a category
@@ -271,6 +298,307 @@ class AddCategoryPage(Frame):
 
         buttonAddCat = Button(self, text="Add category", command=lambda: controller.addCategory(catName.get(), dbCursor))
         buttonAddCat.pack()
+
+#ViewCategoryPage - sorts all tasks by category
+class ViewCategoryPage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        frame = Frame(self, parent)
+
+        # label and input box for category to be viewed
+        label1 = Label(self, text="Category name")
+        label1.pack()
+        catName = Entry(self)
+        catName.pack()
+
+        # calls viewCategory and displays tasks under category inputted
+        buttonAddCat = Button(self, text="View category", command=lambda: self.viewCategory(catName.get(), dbCursor))
+        buttonAddCat.pack()
+
+        # box to list all tasks
+        self.listbox_tasks = Listbox(frame, height=15, width=70)
+        self.listbox_tasks.pack(side=LEFT)
+
+        # scrollbar for tasks list 
+        scrollbar_tasks = Scrollbar(frame)
+        scrollbar_tasks.pack(side=RIGHT, fill=Y)
+
+        # vertical scrollbar properties
+        self.listbox_tasks.config(yscrollcommand=scrollbar_tasks.set)
+        scrollbar_tasks.config(command=self.listbox_tasks.yview)
+
+        # button to delete a task 
+        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
+        # #button to search for a task
+        # searchTaskBtn = Button(self, text = "Search for a task", width=48)
+        # searchTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        #button to mark a task as done 
+        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to edit a task 
+        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to add a task
+        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn.pack(side = 'bottom', fill = 'x') 
+
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton.pack(anchor = NE)
+
+        frame.pack()
+
+    def viewCategory(self, name, dbCursor):
+
+        # clears the listbox 
+        self.listbox_tasks.delete(0, END)                                       
+
+        # early return if input is empty on button click
+        if len(name) == 0:
+            self.listbox_tasks.insert(END, "Please enter a valid category." + "\n") 
+            return
+
+        # retrieves the categoryid from category table and checks if it holds any tasks
+        searchCat = ("SELECT t.categoryid FROM task t WHERE t.categoryid IN (SELECT c.categoryid FROM category c WHERE categoryname = (%s));")
+        dbCursor.execute(searchCat,(name,))
+        result = dbCursor.fetchall()
+        
+        # early return if category does not exist
+        if result == []:
+            self.listbox_tasks.insert(END, "Category does not have any tasks." + "\n") 
+            return
+        
+        # retrieves all tasks from the category
+        viewId = result[0][0]
+        viewCat = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE categoryid = (%s);")
+        dbCursor.execute(viewCat,(viewId,))
+        output = dbCursor.fetchall()
+
+        self.listbox_tasks.insert(END, "Tasks under category: " + name) 
+
+        # inserts tasks into the listbox
+        for task in output:                               
+            for j in range(len(task)):                  
+                self.listbox_tasks.insert(END, task[j])     
+
+#SortByDatePage - sorts all tasks by date
+class SortByDatePage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        frame = Frame(self, parent)
+
+        # label and input box for category to be viewed
+        label1 = Label(self, text="Enter date (yyyy-mm-dd):")
+        label1.pack()
+        date = Entry(self)
+        date.pack()
+
+        # calls viewCategory and displays tasks under category inputted
+        buttonAddCat = Button(self, text="Sort", command=lambda: self.sortByDate(date.get(), dbCursor))
+        buttonAddCat.pack()
+
+        # box to list all tasks
+        self.listbox_tasks = Listbox(frame, height=15, width=70)
+        self.listbox_tasks.pack(side=LEFT)
+
+        # scrollbar for tasks list 
+        scrollbar_tasks = Scrollbar(frame)
+        scrollbar_tasks.pack(side=RIGHT, fill=Y)
+
+        # vertical scrollbar properties
+        self.listbox_tasks.config(yscrollcommand=scrollbar_tasks.set)
+        scrollbar_tasks.config(command=self.listbox_tasks.yview)
+
+        # button to customize view of tasks by day
+        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to customize view of tasks by month
+        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to delete a task 
+        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
+        # #button to search for a task
+        # searchTaskBtn = Button(self, text = "Search for a task", width=48)
+        # searchTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        #button to mark a task as done 
+        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to edit a task 
+        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to add a task
+        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn.pack(side = 'bottom', fill = 'x') 
+
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton.pack(anchor = NE)
+
+        frame.pack()
+
+    def sortByDate(self, date, dbCursor):
+
+        self.listbox_tasks.delete(0, END)                                       
+
+        # early return if input is empty
+        if len(date) == 0:
+            self.listbox_tasks.insert(END, "Please enter a valid date.") 
+            return
+
+        # retrieves tasks for the given date
+        sortByDate = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE duedate = (%s);")
+        dbCursor.execute(sortByDate,(date,))
+        output = dbCursor.fetchall()
+
+        # early return if month does not contain any tasks
+        if output == []:
+            self.listbox_tasks.insert(END, "There are no tasks for this date." + "\n") 
+            return
+        
+        self.listbox_tasks.insert(END, "Tasks on " + date + ":") 
+        
+        # inserts tasks into the listbox
+        for task in output:     
+            for j in range(len(task)):              
+                self.listbox_tasks.insert(END, task[j])   
+
+#SortByMonthPage - sorts all tasks by month
+class SortByMonthPage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        frame = Frame(self, parent)
+
+        # label and input box for category to be viewed
+        label1 = Label(self, text="Enter month (mm):")
+        label1.pack()
+        date = Entry(self)
+        date.pack()
+
+        # calls viewCategory and displays tasks under category inputted
+        buttonAddCat = Button(self, text="Sort", command=lambda: self.sortByMonth(date.get(), dbCursor))
+        buttonAddCat.pack()
+
+        # box to list all tasks
+        self.listbox_tasks = Listbox(frame, height=15, width=70)
+        self.listbox_tasks.pack(side=LEFT)
+
+        # scrollbar for tasks list 
+        scrollbar_tasks = Scrollbar(frame)
+        scrollbar_tasks.pack(side=RIGHT, fill=Y)
+
+        # vertical scrollbar properties
+        self.listbox_tasks.config(yscrollcommand=scrollbar_tasks.set)
+        scrollbar_tasks.config(command=self.listbox_tasks.yview)
+
+        # button to customize view of tasks by day
+        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to customize view of tasks by month
+        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to delete a task 
+        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
+        # #button to search for a task
+        # searchTaskBtn = Button(self, text = "Search for a task", width=48)
+        # searchTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        #button to mark a task as done 
+        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to edit a task 
+        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to add a task
+        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn.pack(side = 'bottom', fill = 'x') 
+
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton.pack(anchor = NE)
+
+        frame.pack()
+
+    def sortByMonth(self, date, dbCursor):
+
+        self.listbox_tasks.delete(0, END)                                       
+
+        # early return if input is empty
+        if len(date) == 0:
+            self.listbox_tasks.insert(END, "Please enter a valid date." + "\n") 
+            return
+               
+        # retrieves tasks for the given month
+        sortByMonth = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE MONTH(duedate) = (%s);")
+        dbCursor.execute(sortByMonth,(date,))
+        output = dbCursor.fetchall()
+
+        # early return if month does not contain any tasks
+        if output == []:
+            self.listbox_tasks.insert(END, "There are no tasks for this month." + "\n") 
+            return
+
+        # converts the numeric date into its string equivalent
+        dateObj = datetime.datetime.strptime(date, "%m")
+        month = dateObj.strftime("%B")
+        self.listbox_tasks.insert(END, "Tasks for the month of " + month + ":") 
+        
+        # inserts tasks into the listbox
+        for task in output:     
+            for j in range(len(task)):              
+                self.listbox_tasks.insert(END, task[j])  
+
+#EditCategoryPage - edits category name
+class EditCategoryPage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        # button to go to the prev page
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
+        menubutton.pack(anchor = NE)
+
+        label = Label(self, text="Edit a category", font=controller.title_font)
+        label.pack(side="top", pady=10)
+
+        # takes the original category name
+        label1 = Label(self, text="Old category name")
+        label1.pack()
+        oldCat = Entry(self)
+        oldCat.pack()
+
+        # takes the new category name
+        label2 = Label(self, text="New category name")
+        label2.pack()
+        newCat = Entry(self)
+        newCat.pack()
+
+        # proceeds to the editCategory function on button click
+        buttonEditCat = Button(self, text="Edit category", command=lambda: controller.editCategory(oldCat.get(), newCat.get(), dbCursor))
+        buttonEditCat.pack()
 
 # AboutPage - about page 
 class AboutPage(Frame):
