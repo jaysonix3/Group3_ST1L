@@ -37,22 +37,25 @@ class SampleApp(Tk):
 
         self.frames = {}
         # NOTE: always add newly created pages in the parameters
-        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AddTaskPage, EditTaskPage, DeleteTaskPage, AllCategoriesPage, AddCategoryPage, ViewCategoryPage, SortByDatePage, SortByMonthPage, EditCategoryPage):
+        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AddTaskPage, EditTaskPage, MarkTaskDonePage, DeleteTaskPage, AllCategoriesPage, AddCategoryPage, ViewCategoryPage, SortByDatePage, SortByMonthPage, EditCategoryPage, AddTaskToCategoryPage, DeleteCategoryPage):
             page_name = F.__name__                              # get page name
             frame = F(parent=container, controller=self)        # frame
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
         self.show_frame("LandingPage")                          # start with landing page
+
     # show_frame - function to show a frame for a specific page 
     def show_frame(self, page_name):
         frame = self.frames[page_name]      # frame = frame for the specific page 
         frame.tkraise()                     # raise frame above others
+
     # validateDate - function to check if date is
     def validateDate(date):
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
             raise ValueError("Incorrect data format, should be [YYYY-MM-DD]")
+
     # addTask - function to add category to the database (accessible by connector.addTask())
     def addTask(self, title, ddate, desc, dbCursor):
         SampleApp.validateDate(ddate)
@@ -99,6 +102,25 @@ class SampleApp(Tk):
         dbConnect.commit()                      
 
         print("Successfully edited task: " + newTitle, newStatus, newDDate, newDesc)
+
+    def markTaskDone(self, title, dbCursor):
+        if len(title) == 0:
+            print("Please input a valid task title.")
+            return
+        
+        findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
+        dbCursor.execute(findTask, (title,))
+        taskId = dbCursor.fetchone()
+
+        if taskId == None:
+            print("Task does not exist.")
+            return
+
+        markTask = "UPDATE task SET status = 'Y' WHERE taskid = (%s);"
+        dbCursor.execute(markTask, taskId)
+        dbConnect.commit()
+
+        print("Successfully marked task " + title + " as done.")
 
     def deleteTask(self, title, dbCursor):
         if len(title) == 0:
@@ -157,6 +179,66 @@ class SampleApp(Tk):
         dbConnect.commit()                      
 
         print("Successfully edited category: " + newName)
+    
+    def addTaskToCategory(self, taskName, catName, dbCursor):
+        # early return if either input is empty
+        if len(taskName) == 0:
+            print("Please input a valid task name.")
+            return
+        if len(catName) == 0:
+            print("Please input a valid category name.")
+            return
+
+        # retrieves task id to be used for inserting into the category
+        findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
+        dbCursor.execute(findTask, (catName,))
+        taskId = dbCursor.fetchone()
+
+        # early return if task does not exist
+        if taskId == None:
+            print("Task does not exist.")
+            return
+        
+        # retrieves category id to be used for updating category name
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (catName,))
+        catId = dbCursor.fetchone()
+
+        # early return if category does not exist
+        if catId == None:
+            print("Category does not exist.")
+            return
+            
+        # updates category name and commits changes
+        updateCat = "UPDATE task SET categoryid = (%s) WHERE taskid = (%s);" 
+        args = catId[0],taskId[0]
+        dbCursor.execute(updateCat, args)
+        dbConnect.commit()                      
+
+        print("Successfully added task " + taskName + " to " + catName +" category.")
+    
+    def deleteCategory(self, name, dbCursor):
+        # early return if either input is empty
+        if len(name) == 0:
+            print("Please input a valid category.")
+            return
+
+        # retrieves category id to be used for deleting the category
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (name,))
+        catId = dbCursor.fetchone()
+
+        # early return if category does not exist
+        if catId == None:
+            print("Category does not exist.")
+            return
+
+        # deletes category and commits changes
+        deleteCat = "DELETE FROM category WHERE categoryid = (%s);" 
+        dbCursor.execute(deleteCat, catId)
+        dbConnect.commit()                      
+
+        print("Successfully deleted category: " + name)
 
 # LandingPage - landing page for the application (first window)
 class LandingPage(Frame): 
@@ -230,7 +312,7 @@ class AllTasksPage(Frame):
         # searchTaskBtn = Button(self, text = "Search for a task", width=48)
         # searchTaskBtn.pack(side = 'bottom', fill = 'x')
         #button to mark a task as done 
-        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn = Button(self, text = "Mark task as done", width=48, command=lambda: controller.show_frame("MarkTaskDonePage"))
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
@@ -326,6 +408,28 @@ class EditTaskPage(Frame):
         buttonEditTask = Button(self, text="Edit task", command=lambda: controller.editTask(oldTask.get(), newTask.get(), newStatus.get(), newDDate.get(), newDesc.get(), dbCursor))
         buttonEditTask.pack()
 
+class MarkTaskDonePage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        # button to go to the prev page
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
+        menubutton.pack(anchor = NE)
+
+        label = Label(self, text="Mark a task as done", font=controller.title_font)
+        label.pack(side="top", pady=10)
+
+        # takes the task name
+        label1 = Label(self, text="Task title")
+        label1.pack()
+        title = Entry(self)
+        title.pack()
+
+        # proceeds to the markTaskDone function on button click
+        markDoneBtn = Button(self, text="Mark task", command=lambda: controller.markTaskDone(title.get(), dbCursor))
+        markDoneBtn.pack()
+
 class DeleteTaskPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
@@ -344,7 +448,7 @@ class DeleteTaskPage(Frame):
         title = Entry(self)
         title.pack()
 
-        # proceeds to the editCategory function on button click
+        # proceeds to the deleteTask function on button click
         buttonDeleteTask = Button(self, text="Delete task", command=lambda: controller.deleteTask(title.get(), dbCursor))
         buttonDeleteTask.pack()
 
@@ -368,14 +472,13 @@ class AllCategoriesPage(Frame):
         # searchCategoryBtn = Button(self, text = "Search for a category", width=48)
         # searchCategoryBtn.pack(side = 'bottom', fill = 'x')
         # button to delete a category 
-        deleteCategoryBtn = Button(self, text="Delete a category", width=48)
+        deleteCategoryBtn = Button(self, text="Delete a category", width=48, command=lambda: controller.show_frame("DeleteCategoryPage"))
         deleteCategoryBtn.pack(side = 'bottom', fill = 'x')
         #button to add a task to a category
-        addTaskCategoryBtn = Button(self, text = "Add a task to a category", width=48, )
+        addTaskCategoryBtn = Button(self, text = "Add a task to a category", width=48, command=lambda: controller.show_frame("AddTaskToCategoryPage"))
         addTaskCategoryBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a category
-        editCategoryBtn = Button(self, text = "Edit a category", width=48)
         editCategoryBtn = Button(self, text = "Edit a category", width=48, command=lambda: controller.show_frame("EditCategoryPage"))
         editCategoryBtn.pack(side = 'bottom', fill = 'x')
 
@@ -457,7 +560,7 @@ class ViewCategoryPage(Frame):
         # searchTaskBtn.pack(side = 'bottom', fill = 'x')
 
         #button to mark a task as done 
-        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn = Button(self, text = "Mark task as done", width=48, command=lambda: controller.show_frame("MarkTaskDonePage"))
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
@@ -554,7 +657,7 @@ class SortByDatePage(Frame):
         # searchTaskBtn.pack(side = 'bottom', fill = 'x')
 
         #button to mark a task as done 
-        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn = Button(self, text = "Mark task as done", width=48, command=lambda: controller.show_frame("MarkTaskDonePage"))
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
@@ -644,7 +747,7 @@ class SortByMonthPage(Frame):
         # searchTaskBtn.pack(side = 'bottom', fill = 'x')
 
         #button to mark a task as done 
-        markDoneBtn = Button(self, text = "Mark task as done", width=48)
+        markDoneBtn = Button(self, text = "Mark task as done", width=48, command=lambda: controller.show_frame("MarkTaskDonePage"))
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
@@ -717,6 +820,56 @@ class EditCategoryPage(Frame):
         # proceeds to the editCategory function on button click
         buttonEditCat = Button(self, text="Edit category", command=lambda: controller.editCategory(oldCat.get(), newCat.get(), dbCursor))
         buttonEditCat.pack()
+
+class AddTaskToCategoryPage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        # button to go to the prev page
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
+        menubutton.pack(anchor = NE)
+
+        label = Label(self, text="Add a task to a Category", font=controller.title_font)
+        label.pack(side="top", pady=10)
+
+        # takes the task name
+        label1 = Label(self, text="Task name")
+        label1.pack()
+        taskname = Entry(self)
+        taskname.pack()
+
+        # takes the category name
+        label2 = Label(self, text="Name of category")
+        label2.pack()
+        catname = Entry(self)
+        catname.pack()
+
+        # proceeds to the addTaskToCategory function on button click
+        buttonEditCat = Button(self, text="Add task into category", command=lambda: controller.addTaskToCategory(taskname.get(), catname.get(), dbCursor))
+        buttonEditCat.pack()
+
+class DeleteCategoryPage(Frame): 
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+
+        # button to go to the prev page
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
+        menubutton.pack(anchor = NE)
+
+        label = Label(self, text="Delete a category", font=controller.title_font)
+        label.pack(side="top", pady=10)
+
+        # takes the original task name
+        label1 = Label(self, text="Enter category name")
+        label1.pack()
+        catname = Entry(self)
+        catname.pack()
+
+        # proceeds to the deleteCategory function on button click
+        buttonDeleteCategory = Button(self, text="Delete category", command=lambda: controller.deleteCategory(catname.get(), dbCursor))
+        buttonDeleteCategory.pack()
 
 # AboutPage - about page 
 class AboutPage(Frame):
