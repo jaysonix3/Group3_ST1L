@@ -4,6 +4,7 @@ from tkinter import *
 from functools import partial
 from tkinter import font as tkfont      # formatting purposes
 import datetime                         # for sorting by month
+import re                               # for input validation
 
 #reference for mysql connector: https://www.youtube.com/watch?v=oDR7k66x-AU&t=427s&ab_channel=DiscoverPython
 
@@ -37,7 +38,7 @@ class SampleApp(Tk):
 
         self.frames = {}
         # NOTE: always add newly created pages in the parameters
-        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AddTaskPage, EditTaskPage, MarkTaskDonePage, DeleteTaskPage, AllCategoriesPage, AddCategoryPage, ViewCategoryPage, SortByDatePage, SortByMonthPage, EditCategoryPage, AddTaskToCategoryPage, DeleteCategoryPage):
+        for F in (LandingPage, TasksMainPage, AboutPage, AllTasksPage, AddTaskPage, EditTaskPage, MarkTaskDonePage, DeleteTaskPage, AllCategoriesPage, AddCategoryPage, ViewCategoryPage, ViewByDatePage, ViewByMonthPage, EditCategoryPage, AddTaskToCategoryPage, DeleteCategoryPage):
             page_name = F.__name__                              # get page name
             frame = F(parent=container, controller=self)        # frame
             self.frames[page_name] = frame
@@ -172,30 +173,6 @@ class SampleApp(Tk):
         dbConnect.commit()                      # commit changes (insert statement)
 
         print("Added", name, "successfully!")
-
-    def editCategory(self, oldName, newName, dbCursor):
-        # early return if either input is empty
-        if len(oldName) == 0 or len(newName) == 0:
-            print("Please input a valid category.")
-            return
-
-        # retrieves category id to be used for updating category name
-        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
-        dbCursor.execute(findCat, (oldName,))
-        catId = dbCursor.fetchone()
-
-        # early return if category does not exist
-        if catId == None:
-            print("Category does not exist.")
-            return
-
-        # updates category name and commits changes
-        updateCat = "UPDATE category SET categoryname = (%s) WHERE categoryid = (%s);" 
-        args = newName, catId[0]
-        dbCursor.execute(updateCat, args)
-        dbConnect.commit()                      
-
-        print("Successfully edited category: " + newName)
     
     def addTaskToCategory(self, taskName, catName, dbCursor):
         # early return if either input is empty
@@ -284,6 +261,7 @@ class LandingPage(Frame):
         button1.pack(side = "top", fill = "x", pady = 20)
         button2.pack(side = "top", fill = "x", pady = 20)
         button3.pack(side = "top", fill = "x", pady = 20)
+
 # TasksMainPage - 'tasks' page
 class TasksMainPage(Frame): 
     def __init__(self, parent, controller):
@@ -300,6 +278,7 @@ class TasksMainPage(Frame):
         menubutton = Button(self, text = "Go back to the main page", command=lambda: controller.show_frame("LandingPage"))
         menubutton.pack(side = 'top', fill = 'x', pady = 60)
         frame.pack()
+
 #AllTasks - view all tasks page
 class AllTasksPage(Frame): 
     def __init__(self, parent, controller):
@@ -317,13 +296,13 @@ class AllTasksPage(Frame):
         scrollbar_tasks.config(command=self.listbox_tasks.yview)
 
         # button to customize view of tasks by day
-        viewTasksByBtn = Button(self, text="Sort by day", width=48)
-        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
+        viewTasksByBtn = Button(self, text="View by date", width=48)
+        viewTasksByBtn = Button(self, text="View by date", width=48, command=lambda: controller.show_frame("ViewByDatePage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to customize view of tasks by month
-        viewTasksByBtn = Button(self, text="Sort by month", width=48)
-        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
+        viewTasksByBtn = Button(self, text="View by month", width=48)
+        viewTasksByBtn = Button(self, text="View by month", width=48, command=lambda: controller.show_frame("ViewByMonthPage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to delete a task 
@@ -525,6 +504,7 @@ class AllCategoriesPage(Frame):
             for j in range(len(category)):
                 self.listbox_category.insert(END, category[j])      # insert categories in the listbox display
         self.after(1000, self.categoryUpdate)                               # for every 1000 milliseconds, update the page
+
 #AddCategoryPage - page to add a category 
 class AddCategoryPage(Frame): 
     def __init__(self, parent, controller):
@@ -605,7 +585,15 @@ class ViewCategoryPage(Frame):
 
         # early return if input is empty on button click
         if len(name) == 0:
-            self.listbox_tasks.insert(END, "Please enter a valid category." + "\n") 
+            self.listbox_tasks.insert(END, "Please enter a valid category.") 
+            return
+        
+        checkCat = ("SELECT c.categoryid FROM category c WHERE categoryname = (%s)")
+        dbCursor.execute(checkCat,(name,))
+        result = dbCursor.fetchall()
+
+        if result == []:
+            self.listbox_tasks.insert(END, "Category does not exist. Please enter another category.") 
             return
 
         # retrieves the categoryid from category table and checks if it holds any tasks
@@ -615,7 +603,7 @@ class ViewCategoryPage(Frame):
 
         # early return if category does not exist
         if result == []:
-            self.listbox_tasks.insert(END, "Category does not have any tasks." + "\n") 
+            self.listbox_tasks.insert(END, "Category does not have any tasks.") 
             return
 
         # retrieves all tasks from the category
@@ -631,8 +619,8 @@ class ViewCategoryPage(Frame):
             for j in range(len(task)):                  
                 self.listbox_tasks.insert(END, task[j])     
 
-#SortByDatePage - sorts all tasks by date
-class SortByDatePage(Frame): 
+#ViewByDatePage - sorts all tasks by date
+class ViewByDatePage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -645,9 +633,9 @@ class SortByDatePage(Frame):
         date = Entry(self)
         date.pack()
 
-        # calls viewCategory and displays tasks under category inputted
-        buttonAddCat = Button(self, text="Sort", command=lambda: self.sortByDate(date.get(), dbCursor))
-        buttonAddCat.pack()
+        # calls viewByDate to view tasks within the date specified
+        buttonViewDate = Button(self, text="Sort", command=lambda: self.viewByDate(date.get(), dbCursor))
+        buttonViewDate.pack()
 
         # box to list all tasks
         self.listbox_tasks = Listbox(frame, height=15, width=70)
@@ -662,15 +650,15 @@ class SortByDatePage(Frame):
         scrollbar_tasks.config(command=self.listbox_tasks.yview)
 
         # button to customize view of tasks by day
-        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
+        viewTasksByBtn = Button(self, text="View by date", width=48, command=lambda: controller.show_frame("ViewByDatePage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to customize view of tasks by month
-        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
+        viewTasksByBtn = Button(self, text="View by month", width=48, command=lambda: controller.show_frame("ViewByMonthPage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to delete a task 
-        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn = Button(self, text="Delete a task", width=48, command=lambda: controller.show_frame("DeleteTaskPage"))
         deleteTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
@@ -683,11 +671,11 @@ class SortByDatePage(Frame):
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
-        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn = Button(self, text = "Edit a task", width=48, command=lambda: controller.show_frame("EditTaskPage"))
         editTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # button to add a task
-        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn = Button(self, text="Add task", width=48, command=lambda: controller.show_frame("AddTaskPage"))
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
 
         menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
@@ -695,34 +683,40 @@ class SortByDatePage(Frame):
 
         frame.pack()
 
-    def sortByDate(self, date, dbCursor):
+    def viewByDate(self, date, dbCursor):
 
-        self.listbox_tasks.delete(0, END)                                       
+        self.listbox_tasks.delete(0, END)        
+
+        # uses regex to check input
+        valid = re.search("[2][0-9]{3}\-((0[1-9])|(1[0-2]))\-(([0][1-9])|([12][0-9])|([3][01]))", date)                             
 
         # early return if input is empty
-        if len(date) == 0:
+        if len(date) == 0 or not valid:
             self.listbox_tasks.insert(END, "Please enter a valid date.") 
             return
 
         # retrieves tasks for the given date
-        sortByDate = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE duedate = (%s);")
-        dbCursor.execute(sortByDate,(date,))
+        viewByDate = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE duedate = (%s);")
+        dbCursor.execute(viewByDate,(date,))
         output = dbCursor.fetchall()
 
         # early return if month does not contain any tasks
         if output == []:
-            self.listbox_tasks.insert(END, "There are no tasks for this date." + "\n") 
+            self.listbox_tasks.insert(END, "There are no tasks for this date.") 
             return
 
-        self.listbox_tasks.insert(END, "Tasks on " + date + ":") 
+        # converts the numeric date into its string equivalent
+        dateObj = datetime.datetime.strptime(date, "%Y-%m-%d")
+        fullDate = dateObj.strftime("%B %d %Y")
+        self.listbox_tasks.insert(END, "Tasks for " + fullDate + ":") 
 
         # inserts tasks into the listbox
         for task in output:     
             for j in range(len(task)):              
                 self.listbox_tasks.insert(END, task[j])   
 
-#SortByMonthPage - sorts all tasks by month
-class SortByMonthPage(Frame): 
+#ViewByMonthPage - sorts all tasks by month
+class ViewByMonthPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -735,9 +729,9 @@ class SortByMonthPage(Frame):
         date = Entry(self)
         date.pack()
 
-        # calls viewCategory and displays tasks under category inputted
-        buttonAddCat = Button(self, text="Sort", command=lambda: self.sortByMonth(date.get(), dbCursor))
-        buttonAddCat.pack()
+        # calls viewByMonth to view tasks within the month specified
+        buttonViewMonth = Button(self, text="Sort", command=lambda: self.viewByMonth(date.get(), dbCursor))
+        buttonViewMonth.pack()
 
         # box to list all tasks
         self.listbox_tasks = Listbox(frame, height=15, width=70)
@@ -752,15 +746,15 @@ class SortByMonthPage(Frame):
         scrollbar_tasks.config(command=self.listbox_tasks.yview)
 
         # button to customize view of tasks by day
-        viewTasksByBtn = Button(self, text="Sort by day", width=48, command=lambda: controller.show_frame("SortByDatePage"))
+        viewTasksByBtn = Button(self, text="View by date", width=48, command=lambda: controller.show_frame("ViewByDatePage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to customize view of tasks by month
-        viewTasksByBtn = Button(self, text="Sort by month", width=48, command=lambda: controller.show_frame("SortByMonthPage"))
+        viewTasksByBtn = Button(self, text="View by month", width=48, command=lambda: controller.show_frame("ViewByMonthPage"))
         viewTasksByBtn.pack(side = 'bottom', fill = 'x')
 
         # button to delete a task 
-        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn = Button(self, text="Delete a task", width=48, command=lambda: controller.show_frame("DeleteTaskPage"))
         deleteTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
@@ -773,11 +767,11 @@ class SortByMonthPage(Frame):
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
-        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn = Button(self, text = "Edit a task", width=48, command=lambda: controller.show_frame("EditTaskPage"))
         editTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # button to add a task
-        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn = Button(self, text="Add task", width=48, command=lambda: controller.show_frame("AddTaskPage"))
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
 
         menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
@@ -785,23 +779,26 @@ class SortByMonthPage(Frame):
 
         frame.pack()
 
-    def sortByMonth(self, date, dbCursor):
+    def viewByMonth(self, date, dbCursor):
 
-        self.listbox_tasks.delete(0, END)                                       
+        self.listbox_tasks.delete(0, END)       
+        
+        # uses regex to check input
+        valid = re.search("(^0[1-9]$)|(^1[0-2]$)", date)                                   
 
         # early return if input is empty
-        if len(date) == 0:
-            self.listbox_tasks.insert(END, "Please enter a valid date." + "\n") 
+        if len(date) == 0 or not valid:
+            self.listbox_tasks.insert(END, "Please enter a valid date.")  
             return
 
         # retrieves tasks for the given month
-        sortByMonth = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE MONTH(duedate) = (%s);")
-        dbCursor.execute(sortByMonth,(date,))
+        viewByMonth = ("SELECT CONCAT(DATE_FORMAT(duedate, '%M-%d-%Y'), ': ', tasktitle, ' - ', description, ' | Status: ', status) FROM task WHERE MONTH(duedate) = (%s);")
+        dbCursor.execute(viewByMonth,(date,))
         output = dbCursor.fetchall()
 
         # early return if month does not contain any tasks
         if output == []:
-            self.listbox_tasks.insert(END, "There are no tasks for this month." + "\n") 
+            self.listbox_tasks.insert(END, "There are no tasks for this month.") 
             return
 
         # converts the numeric date into its string equivalent
@@ -817,6 +814,7 @@ class SortByMonthPage(Frame):
 #EditCategoryPage - edits category name
 class EditCategoryPage(Frame): 
     def __init__(self, parent, controller):
+
         Frame.__init__(self, parent)
         self.controller = controller
 
@@ -840,8 +838,56 @@ class EditCategoryPage(Frame):
         newCat.pack()
 
         # proceeds to the editCategory function on button click
-        buttonEditCat = Button(self, text="Edit category", command=lambda: controller.editCategory(oldCat.get(), newCat.get(), dbCursor))
+        buttonEditCat = Button(self, text="Edit category", command=lambda: self.editCategory(oldCat.get(), newCat.get(), dbCursor))
         buttonEditCat.pack()
+    
+    def editCategory(self, oldName, newName, dbCursor):
+    
+        # early return if either input is empty
+        if len(oldName) == 0 or len(newName) == 0:
+            print("Please input a valid category.")
+            prompt = Label(self, text="Please input a valid category.")
+            prompt.pack(pady=10)
+            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
+            return
+        
+        # checks if new name already exists as another category
+        verifyCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(verifyCat, (newName,))
+        catId = dbCursor.fetchone()
+
+        if catId != None:
+            print("Category already exists.")
+            prompt = Label(self, text="Category already exists. Please replace with a different name.")
+            prompt.pack(pady=10)
+            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
+            return
+
+
+        # retrieves category id to be used for updating category name
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (oldName,))
+        catId = dbCursor.fetchone()
+
+        # early return if category does not exist
+        if catId == None:
+            print("Category does not exist.")
+            prompt = Label(self, text="Category does not exist.")
+            prompt.pack(pady=10)
+            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
+            return
+
+        # updates category name and commits changes
+        updateCat = "UPDATE category SET categoryname = (%s) WHERE categoryid = (%s);" 
+        args = newName, catId[0] # retrieves id from returned tuple
+        dbCursor.execute(updateCat, args)
+        dbConnect.commit() # commits changes to the db       
+
+        # prompts success on terminal and on app
+        print("Successfully edited category: " + newName)
+        prompt = Label(self, text="Successfully edited category!")
+        prompt.pack(pady=10)
+        prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
 
 class AddTaskToCategoryPage(Frame): 
     def __init__(self, parent, controller):
