@@ -157,6 +157,10 @@ class SampleApp(Tk):
 
     # addCategory - function to add category to the database (accessible by connector.addCategory())
     def addCategory(self, name, dbCursor): 
+        if len(name) == 0:
+            print("Please input a valid category name.")
+            return
+        
         # select statement to get the maximum value of categoryid + 1 (for the id of the to-be-added category)
         dbCursor.execute("SELECT MAX(categoryid)+1 FROM category;")     
         for id in dbCursor:     # loop through the result of the select statement 
