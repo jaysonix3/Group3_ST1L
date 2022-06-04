@@ -2,6 +2,7 @@
 #import tkinter
 from tkinter import *       
 from functools import partial
+from tkinter import messagebox 
 from tkinter import font as tkfont      # formatting purposes
 import datetime                         # for sorting by month
 import re                               # for input validation
@@ -160,6 +161,7 @@ class SampleApp(Tk):
     def addCategory(self, name, dbCursor): 
         if len(name) == 0:
             print("Please input a valid category name.")
+            messagebox.showinfo("Messagebox", "Please input a valid category name.")
             return
         
         # select statement to get the maximum value of categoryid + 1 (for the id of the to-be-added category)
@@ -173,6 +175,7 @@ class SampleApp(Tk):
         dbConnect.commit()                      # commit changes (insert statement)
 
         print("Added", name, "successfully!")
+        messagebox.showinfo("Messagebox", "Added category successfully!")
     
     def addTaskToCategory(self, taskName, catName, dbCursor):
         # early return if either input is empty
