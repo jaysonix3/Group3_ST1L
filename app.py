@@ -191,7 +191,7 @@ class SampleApp(Tk):
 
         # retrieves task id to be used for inserting into the category
         findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
-        dbCursor.execute(findTask, (catName,))
+        dbCursor.execute(findTask, (taskName,))
         taskId = dbCursor.fetchone()
 
         # early return if task does not exist
