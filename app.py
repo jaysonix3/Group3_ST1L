@@ -58,6 +58,15 @@ class SampleApp(Tk):
 
     # addTask - function to add category to the database (accessible by connector.addTask())
     def addTask(self, title, ddate, desc, dbCursor):
+        # early return if title is empty
+        if len(title) == 0:
+            print("Please input a valid task title.")
+            return
+
+        if len(ddate) == 0:
+            print("Please input a valid date.")
+            return
+
         SampleApp.validateDate(ddate)
         # select statement to get the maximum value of taskid + 1 (for the id of the to-be-added task)
         dbCursor.execute("SELECT MAX(taskid)+1 FROM task;")     
@@ -85,6 +94,10 @@ class SampleApp(Tk):
         # early return if task does not exist
         if taskId == None:
             print("Task does not exist.")
+            return
+
+        if len(newDDate) == 0:
+            print("Please input a valid date.")
             return
 
         #check if date is valid
@@ -351,7 +364,7 @@ class AddTaskPage(Frame):
         label1.pack()
         taskTitle = Entry(self)
         taskTitle.pack()
-        label2 = Label(self, text="Due date")
+        label2 = Label(self, text="Due date (YYYY-MM-DD)")
         label2.pack()
         taskDDate = Entry(self)
         taskDDate.pack()
