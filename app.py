@@ -55,6 +55,11 @@ class SampleApp(Tk):
             raise ValueError("Incorrect data format, should be [YYYY-MM-DD]")
     # addTask - function to add category to the database (accessible by connector.addTask())
     def addTask(self, title, ddate, desc, dbCursor):
+        # early return if title is empty
+        if len(title) == 0:
+            print("Please input a valid task title.")
+            return
+
         SampleApp.validateDate(ddate)
         # select statement to get the maximum value of taskid + 1 (for the id of the to-be-added task)
         dbCursor.execute("SELECT MAX(taskid)+1 FROM task;")     
