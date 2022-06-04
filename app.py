@@ -118,24 +118,41 @@ class SampleApp(Tk):
 
         print("Successfully edited task: " + newTitle, newStatus, newDDate, newDesc)
 
+    # markTaskDone - function to update status to "Y" of a task from the task table (accessible by connector.markTaskDone())
     def markTaskDone(self, title, dbCursor):
+        # early return if either input is empty
         if len(title) == 0:
             print("Please input a valid task title.")
+            messagebox.showinfo("Messagebox", "Please input a valid task title.")
             return
         
-        findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
+        # gets the taskid and status from task table given the input tasktitle
+        findTask = ("SELECT taskid,status FROM task WHERE tasktitle = (%s);")
         dbCursor.execute(findTask, (title,))
-        taskId = dbCursor.fetchone()
+        result = dbCursor.fetchone()
 
+        taskId = result[0]
+        status = result[1]
+
+        # checks if task id exists
         if taskId == None:
+            messagebox.showinfo("Messagebox", "Task does not exist.")
             print("Task does not exist.")
             return
 
+        # checks if status is already 'Y'
+        if status == "Y":
+            messagebox.showinfo("Messagebox", "Task is already marked as done!")
+            print("Task is already marked as done!")
+            return
+        
+        # updates task status to Y
         markTask = "UPDATE task SET status = 'Y' WHERE taskid = (%s);"
-        dbCursor.execute(markTask, taskId)
+        dbCursor.execute(markTask, (taskId,))
         dbConnect.commit()
 
         print("Successfully marked task " + title + " as done.")
+        messagebox.showinfo("Messagebox","Successfully marked task '" + title + "' as done.")
 
     def deleteTask(self, title, dbCursor):
         if len(title) == 0:
@@ -232,9 +249,11 @@ class SampleApp(Tk):
         # early return if either input is empty
         if len(taskName) == 0:
             print("Please input a valid task name.")
+            messagebox.showinfo("Messagebox", "Please input a valid task name.")
             return
         if len(catName) == 0:
             print("Please input a valid category name.")
+            messagebox.showinfo("Messagebox", "Please input a valid category name.")
             return
 
         # retrieves task id to be used for inserting into the category
@@ -244,6 +263,7 @@ class SampleApp(Tk):
 
         # early return if task does not exist
         if taskId == None:
+            messagebox.showinfo("Messagebox", "Task does not exist.")
             print("Task does not exist.")
             return
         
@@ -254,6 +274,7 @@ class SampleApp(Tk):
 
         # early return if category does not exist
         if catId == None:
+            messagebox.showinfo("Messagebox", "Category does not exist.")
             print("Category does not exist.")
             return
             
@@ -264,10 +285,13 @@ class SampleApp(Tk):
         dbConnect.commit()                      
 
         print("Successfully added task " + taskName + " to " + catName +" category.")
+        messagebox.showinfo("Messagebox", "Successfully added task '" + taskName + "' to '" + catName +"' category.")
     
-    def deleteCategory(self, name, dbCursor):
+    # deleteCategory - function to delete a category from the database (accessible by connector.deleteCategory())
+    def deleteCategory(self, name, deleteTask, dbCursor):
         # early return if either input is empty
         if len(name) == 0 or name == "no category" :
+            messagebox.showinfo("Messagebox", "Please input a valid category.")
             print("Please input a valid category.")
             return
 
@@ -278,20 +302,28 @@ class SampleApp(Tk):
 
         # early return if category does not exist
         if catId == None:
+            messagebox.showinfo("Messagebox", "Category does not exist.")
             print("Category does not exist.")
             return
 
-        # deletes all task from the given category
-        getTasks = ("DELETE FROM task WHERE categoryid = (%s);")
-        dbCursor.execute(getTasks,catId)
-        dbConnect.commit()   
+        if deleteTask == 1:
+            # deletes all task from the given category
+            removeTasks = ("DELETE FROM task WHERE categoryid = (%s);")
+            dbCursor.execute(removeTasks,catId)
+            dbConnect.commit()   
+        else:
+            # sets all category values to default 1 for the items in the category to be deleted
+            updateTasks = ("UPDATE task SET categoryid = 1 WHERE categoryid = (%s);")
+            dbCursor.execute(updateTasks,catId)
+            dbConnect.commit()   
 
         # deletes category and commits changes
         deleteCat = "DELETE FROM category WHERE categoryid = (%s);" 
         dbCursor.execute(deleteCat, catId)
         dbConnect.commit()                      
 
-        print("Successfully deleted category: " + name)
+        print("Successfully deleted category '" + name +"'")
+        messagebox.showinfo("Messagebox", "Successfully deleted category '" + name +"'")
 
 # LandingPage - landing page for the application (first window)
 class LandingPage(Frame): 
@@ -941,8 +973,12 @@ class DeleteCategoryPage(Frame):
         catname = Entry(self)
         catname.pack()
 
+        # option to retain tasks and delete the category only
+        checkbx = IntVar()
+        Checkbutton(self, text="Delete all tasks in the category", variable=checkbx).pack()
+
         # proceeds to the deleteCategory function on button click
-        buttonDeleteCategory = Button(self, text="Delete category", command=lambda: controller.deleteCategory(catname.get(), dbCursor))
+        buttonDeleteCategory = Button(self, text="Delete category", command=lambda: controller.deleteCategory(catname.get(), checkbx.get(), dbCursor))
         buttonDeleteCategory.pack()
 
 # AboutPage - about page 
