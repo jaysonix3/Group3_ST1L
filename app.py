@@ -219,7 +219,7 @@ class SampleApp(Tk):
     
     def deleteCategory(self, name, dbCursor):
         # early return if either input is empty
-        if len(name) == 0:
+        if len(name) == 0 or name == "no category" :
             print("Please input a valid category.")
             return
 
@@ -232,6 +232,11 @@ class SampleApp(Tk):
         if catId == None:
             print("Category does not exist.")
             return
+
+        # deletes all task from the given category
+        getTasks = ("DELETE FROM task WHERE categoryid = (%s);")
+        dbCursor.execute(getTasks,catId)
+        dbConnect.commit()   
 
         # deletes category and commits changes
         deleteCat = "DELETE FROM category WHERE categoryid = (%s);" 
