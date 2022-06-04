@@ -158,12 +158,23 @@ class SampleApp(Tk):
         print("Successfully deleted task: " + title)
 
     # addCategory - function to add category to the database (accessible by connector.addCategory())
-    def addCategory(self, name, dbCursor): 
+    def addCategory(self, name, dbCursor):
+        # check if input is empty 
         if len(name) == 0:
             print("Please input a valid category name.")
             messagebox.showinfo("Messagebox", "Please input a valid category name.")
             return
-        
+       
+        #check if category name already exists
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (name,))
+        cats = dbCursor.fetchone()
+
+        if cats != None:
+            print("Category name already exists.")
+            messagebox.showinfo("Messagebox", "Category name exists.")
+            return
+    
         # select statement to get the maximum value of categoryid + 1 (for the id of the to-be-added category)
         dbCursor.execute("SELECT MAX(categoryid)+1 FROM category;")     
         for id in dbCursor:     # loop through the result of the select statement 
