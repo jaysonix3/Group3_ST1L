@@ -188,6 +188,46 @@ class SampleApp(Tk):
         print("Added", name, "successfully!")
         messagebox.showinfo("Messagebox", "Added category successfully!")
     
+    def editCategory(self, oldName, newName, dbCursor):
+    
+        # early return if either input is empty
+        if len(oldName) == 0 or len(newName) == 0:
+            print("Please input a valid category.")
+            messagebox.showinfo("Messagebox", "Please input a valid category.")
+            return
+        
+        # checks if new name already exists as another category
+        verifyCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(verifyCat, (newName,)) 
+        catId = dbCursor.fetchone()
+
+        # early return if new name already exists as another category
+        if catId != None:
+            print("Category already exists.")
+            messagebox.showinfo("Messagebox", "Category already exists. Please replace with a different name.")
+            return
+
+        # retrieves category id to be used for updating category name
+        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
+        dbCursor.execute(findCat, (oldName,))
+        catId = dbCursor.fetchone()
+
+        # early return if category does not exist
+        if catId == None:
+            print("Category does not exist.")
+            messagebox.showinfo("Messagebox", "Category does not exist.")
+            return
+
+        # updates category name and commits changes
+        updateCat = "UPDATE category SET categoryname = (%s) WHERE categoryid = (%s);" 
+        args = newName, catId[0] # retrieves id from returned tuple
+        dbCursor.execute(updateCat, args)
+        dbConnect.commit() # commits changes to the db       
+
+        # prompts success on terminal and on app
+        print("Successfully edited category: " + newName)
+        messagebox.showinfo("Messagebox", "Successfully edited category!")
+    
     def addTaskToCategory(self, taskName, catName, dbCursor):
         # early return if either input is empty
         if len(taskName) == 0:
@@ -852,56 +892,8 @@ class EditCategoryPage(Frame):
         newCat.pack()
 
         # proceeds to the editCategory function on button click
-        buttonEditCat = Button(self, text="Edit category", command=lambda: self.editCategory(oldCat.get(), newCat.get(), dbCursor))
+        buttonEditCat = Button(self, text="Edit category", command=lambda: controller.editCategory(oldCat.get(), newCat.get(), dbCursor))
         buttonEditCat.pack()
-    
-    def editCategory(self, oldName, newName, dbCursor):
-    
-        # early return if either input is empty
-        if len(oldName) == 0 or len(newName) == 0:
-            print("Please input a valid category.")
-            prompt = Label(self, text="Please input a valid category.")
-            prompt.pack(pady=10)
-            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
-            return
-        
-        # checks if new name already exists as another category
-        verifyCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
-        dbCursor.execute(verifyCat, (newName,))
-        catId = dbCursor.fetchone()
-
-        if catId != None:
-            print("Category already exists.")
-            prompt = Label(self, text="Category already exists. Please replace with a different name.")
-            prompt.pack(pady=10)
-            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
-            return
-
-
-        # retrieves category id to be used for updating category name
-        findCat = ("SELECT categoryid FROM category WHERE categoryname = (%s);")
-        dbCursor.execute(findCat, (oldName,))
-        catId = dbCursor.fetchone()
-
-        # early return if category does not exist
-        if catId == None:
-            print("Category does not exist.")
-            prompt = Label(self, text="Category does not exist.")
-            prompt.pack(pady=10)
-            prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
-            return
-
-        # updates category name and commits changes
-        updateCat = "UPDATE category SET categoryname = (%s) WHERE categoryid = (%s);" 
-        args = newName, catId[0] # retrieves id from returned tuple
-        dbCursor.execute(updateCat, args)
-        dbConnect.commit() # commits changes to the db       
-
-        # prompts success on terminal and on app
-        print("Successfully edited category: " + newName)
-        prompt = Label(self, text="Successfully edited category!")
-        prompt.pack(pady=10)
-        prompt.after(1500, prompt.destroy)  # clears prompt after 1500 ms
 
 class AddTaskToCategoryPage(Frame): 
     def __init__(self, parent, controller):
