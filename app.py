@@ -56,7 +56,9 @@ class SampleApp(Tk):
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
+            messagebox.showinfo("Messagebox", "Incorrect data format, should be [YYYY-MM-DD]")
             raise ValueError("Incorrect data format, should be [YYYY-MM-DD]")
+            
 
     # addTask - function to add category to the database (accessible by connector.addTask())
     def addTask(self, title, ddate, desc, dbCursor):
