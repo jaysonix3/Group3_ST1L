@@ -71,6 +71,17 @@ class SampleApp(Tk):
             messagebox.showinfo("Messagebox", "Please input a valid date.")
             return
 
+        # retrieves task id to be used for updating task
+        findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
+        dbCursor.execute(findTask, (title,))
+        taskId = dbCursor.fetchone()
+
+        # early return if task does not exist
+        if taskId != None:
+            print("Task title already exists.")
+            messagebox.showinfo("Messagebox", "Task title already exists.")
+            return
+
         SampleApp.validateDate(ddate)
         # select statement to get the maximum value of taskid + 1 (for the id of the to-be-added task)
         dbCursor.execute("SELECT MAX(taskid)+1 FROM task;")     
@@ -140,14 +151,14 @@ class SampleApp(Tk):
         dbCursor.execute(findTask, (title,))
         result = dbCursor.fetchone()
 
-        taskId = result[0]
-        status = result[1]
-
         # checks if task id exists
-        if taskId == None:
+        if result == None:
             messagebox.showinfo("Messagebox", "Task does not exist.")
             print("Task does not exist.")
             return
+
+        taskId = result[0]
+        status = result[1]
 
         # checks if status is already 'Y'
         if status == "Y":
@@ -201,7 +212,7 @@ class SampleApp(Tk):
 
         if cats != None:
             print("Category name already exists.")
-            messagebox.showinfo("Messagebox", "Category name exists.")
+            messagebox.showinfo("Messagebox", "Category name already exists.")
             return
     
         # select statement to get the maximum value of categoryid + 1 (for the id of the to-be-added category)
