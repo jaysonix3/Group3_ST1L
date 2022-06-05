@@ -1,20 +1,20 @@
 # CMSC 127 PROJECT 
 
-## Group 3 Members: 
+## Group 3 - ST1L Members: 
 	- Jamie Mari O. Ciron
 	- Ralph Jason D. Corrales
 	- Ariel Raphael F. Magno
 	- Marie Sophia Therese T. Nakashima
 
 ## Requirement(s):
-	- PIP for Python (reference: https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
+	- PIP for Python 
 	- pip install mysql-connector-python
-  - app.py = python 3.x with PIP installed
-  - MariaDB = database to be used
+  	- MariaDB = database to be used
 
-## User in MariadDB:
+## User and database in MariadDB:
 	username: test
 	password: cmsc127
+	database name: cmsc127project
 - Note: if using root, update app.py
 
 ## Creation of user in MariaDB: 
@@ -23,8 +23,7 @@
 		- CREATE USER 'test'@localhost IDENTIFIED BY 'cmsc127';
 		- GRANT ALL PRIVILEGES ON cmsc127project.* TO 'test'@'localhost';
 	- login as test
-	- run the command: 
-		- source 127projectdump.sql;
+	- run the command: source 127projectdump.sql;
 
 ## Running the program: 
 	- python app.py
