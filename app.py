@@ -96,7 +96,6 @@ class SampleApp(Tk):
         print("Added", title, ddate, desc, "successfully!")
         messagebox.showinfo("Messagebox","Successfully added task.")
         
-
     def editTask(self, oldTitle, newTitle, newStatus, newDDate, newDesc, dbCursor):
         # early return if either input is empty
         if len(oldTitle) == 0 or len(newTitle) == 0:
@@ -232,8 +231,8 @@ class SampleApp(Tk):
     
         # early return if either input is empty
         if len(oldName) == 0 or len(newName) == 0:
-            print("Please input a valid category.")
-            messagebox.showinfo("Messagebox", "Please input a valid category.")
+            print("Please input a valid name on both fields.")
+            messagebox.showinfo("Messagebox", "Please input a valid name on both fields.")
             return
         
         # checks if new name already exists as another category
@@ -243,8 +242,8 @@ class SampleApp(Tk):
 
         # early return if new name already exists as another category
         if catId != None:
-            print("Category already exists.")
-            messagebox.showinfo("Messagebox", "Category already exists. Please replace with a different name.")
+            print("New category name already exists as another category.")
+            messagebox.showinfo("Messagebox", "New category name already exists as another category.")
             return
 
         # retrieves category id to be used for updating category name
@@ -435,8 +434,13 @@ class AllTasksPage(Frame):
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
         menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
         menubutton.pack(anchor = NE)
+
+        title = Label(self, text="All Tasks")
+        title.pack()
+
         frame.pack()
         self.after(1000, self.taskUpdate)   # for every 1000 milliseconds, update the page
+    
     # update page (update list of tasks)
     def taskUpdate(self):
         # select all tasks
@@ -603,6 +607,10 @@ class AllCategoriesPage(Frame):
         # button to go to the prev page
         menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
         menubutton.pack(anchor = NE)
+
+        title = Label(self, text="All Categories")
+        title.pack()
+
         frame.pack()
         self.after(1000, self.categoryUpdate)   # for every 1000 milliseconds, update the page
     # update page (update list of categories)
@@ -661,8 +669,16 @@ class ViewCategoryPage(Frame):
         self.listbox_tasks.config(yscrollcommand=scrollbar_tasks.set)
         scrollbar_tasks.config(command=self.listbox_tasks.yview)
 
+        # button to customize view of tasks by day
+        viewTasksByBtn = Button(self, text="View by date", width=48, command=lambda: controller.show_frame("ViewByDatePage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
+        # button to customize view of tasks by month
+        viewTasksByBtn = Button(self, text="View by month", width=48, command=lambda: controller.show_frame("ViewByMonthPage"))
+        viewTasksByBtn.pack(side = 'bottom', fill = 'x')
+
         # button to delete a task 
-        deleteTaskBtn = Button(self, text="Delete a task", width=48)
+        deleteTaskBtn = Button(self, text="Delete a task", width=48, command=lambda: controller.show_frame("DeleteTaskPage"))
         deleteTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # NOTE: implement feat only if there is still time (else, delete since it isn't stated in the required feats)
@@ -675,14 +691,14 @@ class ViewCategoryPage(Frame):
         markDoneBtn.pack(side = 'bottom', fill = 'x')
 
         # button to edit a task 
-        editTaskBtn = Button(self, text = "Edit a task", width=48)
+        editTaskBtn = Button(self, text = "Edit a task", width=48, command=lambda: controller.show_frame("EditTaskPage"))
         editTaskBtn.pack(side = 'bottom', fill = 'x')
 
         # button to add a task
-        addTaskBtn = Button(self, text="Add task", width=48)
+        addTaskBtn = Button(self, text="Add task", width=48, command=lambda: controller.show_frame("AddTaskPage"))
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
 
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
         menubutton.pack(anchor = NE)
 
         frame.pack()
@@ -694,7 +710,7 @@ class ViewCategoryPage(Frame):
 
         # early return if input is empty on button click
         if len(name) == 0:
-            self.listbox_tasks.insert(END, "Please enter a valid category.") 
+            messagebox.showinfo("Messagebox", "Please enter a valid category.")
             return
         
         checkCat = ("SELECT c.categoryid FROM category c WHERE categoryname = (%s)")
@@ -702,7 +718,7 @@ class ViewCategoryPage(Frame):
         result = dbCursor.fetchall()
 
         if result == []:
-            self.listbox_tasks.insert(END, "Category does not exist. Please enter another category.") 
+            messagebox.showinfo("Messagebox", "Category does not exist.")
             return
 
         # retrieves the categoryid from category table and checks if it holds any tasks
@@ -712,7 +728,7 @@ class ViewCategoryPage(Frame):
 
         # early return if category does not exist
         if result == []:
-            self.listbox_tasks.insert(END, "Category does not have any tasks.") 
+            messagebox.showinfo("Messagebox", "Category does not have any tasks.")
             return
 
         # retrieves all tasks from the category
@@ -722,6 +738,7 @@ class ViewCategoryPage(Frame):
         output = dbCursor.fetchall()
 
         self.listbox_tasks.insert(END, "Tasks under category: " + name) 
+        self.listbox_tasks.insert(END, "") 
 
         # inserts tasks into the listbox
         for task in output:                               
@@ -801,7 +818,7 @@ class ViewByDatePage(Frame):
 
         # early return if input is empty
         if len(date) == 0 or not valid:
-            self.listbox_tasks.insert(END, "Please enter a valid date.") 
+            messagebox.showinfo("Messagebox", "Please enter a valid date (yyyy-mm-dd).")
             return
 
         # retrieves tasks for the given date
@@ -811,13 +828,15 @@ class ViewByDatePage(Frame):
 
         # early return if month does not contain any tasks
         if output == []:
-            self.listbox_tasks.insert(END, "There are no tasks for this date.") 
+            messagebox.showinfo("Messagebox", "There are no tasks for this date.")
             return
 
         # converts the numeric date into its string equivalent
         dateObj = datetime.datetime.strptime(date, "%Y-%m-%d")
         fullDate = dateObj.strftime("%B %d %Y")
+
         self.listbox_tasks.insert(END, "Tasks for " + fullDate + ":") 
+        self.listbox_tasks.insert(END, "") 
 
         # inserts tasks into the listbox
         for task in output:     
@@ -897,7 +916,7 @@ class ViewByMonthPage(Frame):
 
         # early return if input is empty
         if len(date) == 0 or not valid:
-            self.listbox_tasks.insert(END, "Please enter a valid date.")  
+            messagebox.showinfo("Messagebox", "Please enter a valid month (mm).")
             return
 
         # retrieves tasks for the given month
@@ -907,13 +926,15 @@ class ViewByMonthPage(Frame):
 
         # early return if month does not contain any tasks
         if output == []:
-            self.listbox_tasks.insert(END, "There are no tasks for this month.") 
+            messagebox.showinfo("Messagebox", "There are no tasks for this month.")
             return
 
         # converts the numeric date into its string equivalent
         dateObj = datetime.datetime.strptime(date, "%m")
         month = dateObj.strftime("%B")
+        
         self.listbox_tasks.insert(END, "Tasks for the month of " + month + ":") 
+        self.listbox_tasks.insert(END, "") 
 
         # inserts tasks into the listbox
         for task in output:     
@@ -1010,7 +1031,7 @@ class AboutPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        label = Label(self, text = 'CMSC 127 project\n\nJamie Mari O. Ciron\nRalph Jason D. Corrales\nAriel Raphael F. Magno\nMarie Sophia Therese T. Nakashima')
+        label = Label(self, text = 'CMSC 127 Project\n\nJamie Mari O. Ciron\nRalph Jason D. Corrales\nAriel Raphael F. Magno\nMarie Sophia Therese T. Nakashima')
         # button to go to the main page
         label.pack(side = "top", fill = "x", pady = 10)
         button = Button(self, text = "Go to the main page",
