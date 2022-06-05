@@ -63,10 +63,12 @@ class SampleApp(Tk):
         # early return if title is empty
         if len(title) == 0:
             print("Please input a valid task title.")
+            messagebox.showinfo("Messagebox", "Please input a valid task title.")
             return
 
         if len(ddate) == 0:
             print("Please input a valid date.")
+            messagebox.showinfo("Messagebox", "Please input a valid date.")
             return
 
         SampleApp.validateDate(ddate)
@@ -81,11 +83,14 @@ class SampleApp(Tk):
         dbConnect.commit()                      # commit changes (insert statement)
 
         print("Added", title, ddate, desc, "successfully!")
+        messagebox.showinfo("Messagebox","Successfully added task.")
+        
 
     def editTask(self, oldTitle, newTitle, newStatus, newDDate, newDesc, dbCursor):
         # early return if either input is empty
         if len(oldTitle) == 0 or len(newTitle) == 0:
             print("Please input a valid task title.")
+            messagebox.showinfo("Messagebox", "Please input a valid task title.")
             return
 
         # retrieves task id to be used for updating task
@@ -96,10 +101,12 @@ class SampleApp(Tk):
         # early return if task does not exist
         if taskId == None:
             print("Task does not exist.")
+            messagebox.showinfo("Messagebox", "Task does not exist.")
             return
 
         if len(newDDate) == 0:
             print("Please input a valid date.")
+            messagebox.showinfo("Messagebox", "Please input a valid date.")
             return
 
         #check if date is valid
@@ -108,6 +115,7 @@ class SampleApp(Tk):
         #early return if status != 'Y' or 'y' or 'N' or 'n'
         if newStatus != 'Y' and newStatus != 'N':
             print("Status must be [Y/N]")
+            messagebox.showinfo("Messagebox","Status must be [Y/N]")
             return
 
         # updates task name and commits changes
@@ -117,6 +125,7 @@ class SampleApp(Tk):
         dbConnect.commit()                      
 
         print("Successfully edited task: " + newTitle, newStatus, newDDate, newDesc)
+        messagebox.showinfo("Messagebox","Successfully edited task.")
 
     # markTaskDone - function to update status to "Y" of a task from the task table (accessible by connector.markTaskDone())
     def markTaskDone(self, title, dbCursor):
@@ -157,6 +166,7 @@ class SampleApp(Tk):
     def deleteTask(self, title, dbCursor):
         if len(title) == 0:
             print("Please input a valid task title.")
+            messagebox.showinfo("Messagebox","Please input a valid task title.")
             return
         
         findTask = ("SELECT taskid FROM task WHERE tasktitle = (%s);")
@@ -165,6 +175,7 @@ class SampleApp(Tk):
 
         if taskId == None:
             print("Task does not exist.")
+            messagebox.showinfo("Messagebox","Task does not exist.")
             return
 
         deleteTask = "DELETE FROM task WHERE taskid = (%s);"
@@ -173,6 +184,7 @@ class SampleApp(Tk):
         dbConnect.commit()
 
         print("Successfully deleted task: " + title)
+        messagebox.showinfo("Messagebox","Successfully deleted task: " + title)
 
     # addCategory - function to add category to the database (accessible by connector.addCategory())
     def addCategory(self, name, dbCursor):
