@@ -456,9 +456,6 @@ class AddTaskPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
-        menubutton.pack(anchor = NE)
         label = Label(self, text="Add a task", font=controller.title_font)
         label.pack(side="top", pady=10)
         label1 = Label(self, text="Task title")
@@ -474,16 +471,16 @@ class AddTaskPage(Frame):
         taskDesc = Entry(self)
         taskDesc.pack()
         buttonAddTask = Button(self, text="Add task", command=lambda: controller.addTask(taskTitle.get(), taskDDate.get(), taskDesc.get(), dbCursor))
-        buttonAddTask.pack()
+        buttonAddTask.pack(pady=5)
+        tasksButton = Button(self, text = "View all tasks", command=lambda: controller.show_frame("AllTasksPage"))
+        tasksButton.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
     
 class EditTaskPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
-        menubutton.pack(anchor = NE)
 
         label = Label(self, text="Edit a task", font=controller.title_font)
         label.pack(side="top", pady=10)
@@ -520,16 +517,17 @@ class EditTaskPage(Frame):
 
         # proceeds to the editCategory function on button click
         buttonEditTask = Button(self, text="Edit task", command=lambda: controller.editTask(oldTask.get(), newTask.get(), newStatus.get(), newDDate.get(), newDesc.get(), dbCursor))
-        buttonEditTask.pack()
+        buttonEditTask.pack(pady=5)
+
+        tasksButton = Button(self, text = "View all tasks", command=lambda: controller.show_frame("AllTasksPage"))
+        tasksButton.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 class MarkTaskDonePage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
-        menubutton.pack(anchor = NE)
 
         label = Label(self, text="Mark a task as done", font=controller.title_font)
         label.pack(side="top", pady=10)
@@ -542,16 +540,17 @@ class MarkTaskDonePage(Frame):
 
         # proceeds to the markTaskDone function on button click
         markDoneBtn = Button(self, text="Mark task", command=lambda: controller.markTaskDone(title.get(), dbCursor))
-        markDoneBtn.pack()
+        markDoneBtn.pack(pady=5)
+
+        tasksButton = Button(self, text = "View all tasks", command=lambda: controller.show_frame("AllTasksPage"))
+        tasksButton.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 class DeleteTaskPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
-        menubutton.pack(anchor = NE)
 
         label = Label(self, text="Delete a task", font=controller.title_font)
         label.pack(side="top", pady=10)
@@ -564,7 +563,12 @@ class DeleteTaskPage(Frame):
 
         # proceeds to the deleteTask function on button click
         buttonDeleteTask = Button(self, text="Delete task", command=lambda: controller.deleteTask(title.get(), dbCursor))
-        buttonDeleteTask.pack()
+        buttonDeleteTask.pack(pady=5)
+
+        tasksButton = Button(self, text = "View all tasks", command=lambda: controller.show_frame("AllTasksPage"))
+        tasksButton.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 #AllCategoriesPage - view all categories page
 class AllCategoriesPage(Frame): 
@@ -627,9 +631,6 @@ class AddCategoryPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
-        menubutton.pack(anchor = NE)
         label = Label(self, text="Add a category", font=controller.title_font)
         label.pack(side="top", pady=10)
         label1 = Label(self, text="Category name")
@@ -637,7 +638,9 @@ class AddCategoryPage(Frame):
         catName = Entry(self)
         catName.pack()
         buttonAddCat = Button(self, text="Add category", command=lambda: controller.addCategory(catName.get(), dbCursor))
-        buttonAddCat.pack()
+        buttonAddCat.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 #ViewCategoryPage - sorts all tasks by category
 class ViewCategoryPage(Frame): 
@@ -804,7 +807,7 @@ class ViewByDatePage(Frame):
         addTaskBtn = Button(self, text="Add task", width=48, command=lambda: controller.show_frame("AddTaskPage"))
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
 
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
         menubutton.pack(anchor = NE)
 
         frame.pack()
@@ -902,7 +905,7 @@ class ViewByMonthPage(Frame):
         addTaskBtn = Button(self, text="Add task", width=48, command=lambda: controller.show_frame("AddTaskPage"))
         addTaskBtn.pack(side = 'bottom', fill = 'x') 
 
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("TasksMainPage"))
+        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllTasksPage"))
         menubutton.pack(anchor = NE)
 
         frame.pack()
@@ -948,10 +951,6 @@ class EditCategoryPage(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
 
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
-        menubutton.pack(anchor = NE)
-
         label = Label(self, text="Edit a category", font=controller.title_font)
         label.pack(side="top", pady=10)
 
@@ -969,16 +968,15 @@ class EditCategoryPage(Frame):
 
         # proceeds to the editCategory function on button click
         buttonEditCat = Button(self, text="Edit category", command=lambda: controller.editCategory(oldCat.get(), newCat.get(), dbCursor))
-        buttonEditCat.pack()
+        buttonEditCat.pack(pady=5)
+
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 class AddTaskToCategoryPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
-        menubutton.pack(anchor = NE)
 
         label = Label(self, text="Add a task to a Category", font=controller.title_font)
         label.pack(side="top", pady=10)
@@ -997,16 +995,17 @@ class AddTaskToCategoryPage(Frame):
 
         # proceeds to the addTaskToCategory function on button click
         buttonEditCat = Button(self, text="Add task into category", command=lambda: controller.addTaskToCategory(taskname.get(), catname.get(), dbCursor))
-        buttonEditCat.pack()
+        buttonEditCat.pack(pady=5)
+
+        tasksButton = Button(self, text = "View all tasks", command=lambda: controller.show_frame("AllTasksPage"))
+        tasksButton.pack(pady=5)
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 class DeleteCategoryPage(Frame): 
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
-
-        # button to go to the prev page
-        menubutton = Button(self, text = "Go back to the previous page", command=lambda: controller.show_frame("AllCategoriesPage"))
-        menubutton.pack(anchor = NE)
 
         label = Label(self, text="Delete a category", font=controller.title_font)
         label.pack(side="top", pady=10)
@@ -1023,7 +1022,10 @@ class DeleteCategoryPage(Frame):
 
         # proceeds to the deleteCategory function on button click
         buttonDeleteCategory = Button(self, text="Delete category", command=lambda: controller.deleteCategory(catname.get(), checkbx.get(), dbCursor))
-        buttonDeleteCategory.pack()
+        buttonDeleteCategory.pack(pady=5)
+
+        catsButton = Button(self, text = "View all categories", command=lambda: controller.show_frame("AllCategoriesPage"))
+        catsButton.pack(pady=5)
 
 # AboutPage - about page 
 class AboutPage(Frame):
